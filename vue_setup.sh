@@ -52,8 +52,9 @@ check_prerequisites() {
     print_status "Prerequisites check passed ✓"
 }
 
-# Get project name
-get_project_name() {
+# Get project name and target directory
+get_project_info() {
+    # Get project name
     if [ -z "$1" ]; then
         read -p "Enter project name: " PROJECT_NAME
     else
@@ -65,15 +66,50 @@ get_project_name() {
         exit 1
     fi
     
-    if [ -d "$PROJECT_NAME" ]; then
-        print_error "Directory '$PROJECT_NAME' already exists"
+    # Get target directory
+    if [ -z "$2" ]; then
+        echo ""
+        print_status "Where would you like to create the project?"
+        echo "  Enter full path (e.g., /Users/username/Projects)"
+        echo "  Or press Enter for current directory: $(pwd)"
+        read -p "Target directory: " TARGET_DIR
+        
+        if [ -z "$TARGET_DIR" ]; then
+            TARGET_DIR=$(pwd)
+        fi
+    else
+        TARGET_DIR=$2
+    fi
+    
+    # Expand tilde to home directory if used
+    TARGET_DIR="${TARGET_DIR/#\~/$HOME}"
+    
+    # Create target directory if it doesn't exist
+    if [ ! -d "$TARGET_DIR" ]; then
+        print_status "Creating target directory: $TARGET_DIR"
+        mkdir -p "$TARGET_DIR" || {
+            print_error "Failed to create directory: $TARGET_DIR"
+            exit 1
+        }
+    fi
+    
+    # Check if project directory already exists in target
+    PROJECT_PATH="$TARGET_DIR/$PROJECT_NAME"
+    if [ -d "$PROJECT_PATH" ]; then
+        print_error "Directory '$PROJECT_PATH' already exists"
         exit 1
     fi
+    
+    print_status "Project will be created at: $PROJECT_PATH"
 }
 
 # Create Vue project with Vite and TypeScript
 create_vue_project() {
     print_step "Creating Vue project with Vite and TypeScript..."
+    
+    # Navigate to target directory
+    cd "$TARGET_DIR"
+    
     npm create vue@latest "$PROJECT_NAME" -- \
         --typescript \
         --jsx \
@@ -85,7 +121,7 @@ create_vue_project() {
         --prettier
     
     cd "$PROJECT_NAME"
-    print_status "Vue project created ✓"
+    print_status "Vue project created at: $PROJECT_PATH ✓"
 }
 
 # Install additional dependencies
@@ -670,22 +706,127 @@ export default defineConfig({
         'dist/',
       ],
     },
+    // Handle CSS and other static imports
+    css: true,
+    // Configure server options for dependencies
+    server: {
+      deps: {
+        inline: ['vuetify']
+      }
+    },
+    // Mock CSS and asset files
+    mockReset: true,
+    clearMocks: true,
+    restoreMocks: true
   },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
+  // Define how to handle different file types during testing
+  define: {
+    'import.meta.vitest': 'undefined',
+  },
+  // Handle CSS imports by transforming them
+  css: {
+    modules: {
+      classNameStrategy: 'stable'
+    }
+  }
 })
 EOF
 
     # Create test setup file
     mkdir -p src/test
     cat > src/test/setup.ts << 'EOF'
+import { vi } from 'vitest'
 import { config } from '@vue/test-utils'
-import vuetify from '../plugins/vuetify'
+import { createVuetify } from 'vuetify'
+import { aliases, mdi } from 'vuetify/iconsets/mdi'
 
+// Create a fresh Vuetify instance for testing
+const vuetify = createVuetify({
+  icons: {
+    defaultSet: 'mdi',
+    aliases,
+    sets: {
+      mdi,
+    },
+  },
+  ssr: true, // Important for testing environment
+})
+
+// Configure Vue Test Utils global settings
 config.global.plugins = [vuetify]
+
+// Mock all necessary browser APIs before any components are loaded
+beforeAll(() => {
+  // Mock CSS
+  Object.defineProperty(window, 'CSS', {
+    value: null
+  })
+
+  // Mock matchMedia - this is crucial for Vuetify
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation(query => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  })
+
+  // Mock getComputedStyle
+  Object.defineProperty(window, 'getComputedStyle', {
+    value: vi.fn().mockImplementation(() => ({
+      getPropertyValue: vi.fn().mockReturnValue(''),
+      width: '1024px',
+      height: '768px',
+    })),
+  })
+
+  // Mock IntersectionObserver
+  global.IntersectionObserver = vi.fn().mockImplementation(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  }))
+
+  // Mock ResizeObserver
+  global.ResizeObserver = vi.fn().mockImplementation(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  }))
+
+  // Mock requestAnimationFrame
+  global.requestAnimationFrame = vi.fn().mockImplementation(cb => setTimeout(cb, 0))
+  global.cancelAnimationFrame = vi.fn()
+
+  // Mock HTMLElement methods that Vuetify uses
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+    configurable: true,
+    value: 50,
+  })
+  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+    configurable: true,
+    value: 50,
+  })
+  Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+    configurable: true,
+    value: 50,
+  })
+  Object.defineProperty(HTMLElement.prototype, 'scrollWidth', {
+    configurable: true,
+    value: 50,
+  })
+})
 EOF
 
     # Update Cypress config
@@ -987,6 +1128,7 @@ create_example_components() {
           color="primary" 
           @click="incrementCounter"
           variant="elevated"
+          data-testid="count-button"
         >
           Count: {{ counter }}
         </v-btn>
@@ -1142,23 +1284,71 @@ EOF
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
+import { createVuetify } from 'vuetify'
 import HelloWorld from '../HelloWorld.vue'
 
 describe('HelloWorld', () => {
+  let vuetify: any
+  let pinia: any
+
   beforeEach(() => {
-    setActivePinia(createPinia())
+    // Create fresh instances for each test
+    pinia = createPinia()
+    setActivePinia(pinia)
+    
+    vuetify = createVuetify({
+      ssr: true
+    })
   })
 
   it('renders properly', () => {
-    const wrapper = mount(HelloWorld)
+    const wrapper = mount(HelloWorld, {
+      global: {
+        plugins: [pinia, vuetify],
+        stubs: {
+          // Stub potentially problematic Vuetify components for basic tests
+          'v-progress-circular': true,
+          'v-card': { template: '<div class="v-card-stub"><slot /></div>' },
+          'v-card-title': { template: '<div class="v-card-title-stub"><slot /></div>' },
+          'v-card-text': { template: '<div class="v-card-text-stub"><slot /></div>' },
+          'v-card-actions': { template: '<div class="v-card-actions-stub"><slot /></div>' },
+          'v-btn': { 
+            template: '<button class="v-btn-stub" @click="$emit(\'click\')" :data-testid="$attrs[\'data-testid\']"><slot /></button>',
+            emits: ['click']
+          },
+          'v-spacer': { template: '<div class="v-spacer-stub"></div>' }
+        }
+      }
+    })
+    
     expect(wrapper.text()).toContain('Hello World Component')
   })
 
   it('increments counter when button is clicked', async () => {
-    const wrapper = mount(HelloWorld)
-    const button = wrapper.find('button')
+    const wrapper = mount(HelloWorld, {
+      global: {
+        plugins: [pinia, vuetify],
+        stubs: {
+          'v-progress-circular': true,
+          'v-card': { template: '<div class="v-card-stub"><slot /></div>' },
+          'v-card-title': { template: '<div class="v-card-title-stub"><slot /></div>' },
+          'v-card-text': { template: '<div class="v-card-text-stub"><slot /></div>' },
+          'v-card-actions': { template: '<div class="v-card-actions-stub"><slot /></div>' },
+          'v-btn': { 
+            template: '<button class="v-btn-stub" @click="$emit(\'click\')" :data-testid="$attrs[\'data-testid\']"><slot /></button>',
+            emits: ['click']
+          },
+          'v-spacer': { template: '<div class="v-spacer-stub"></div>' }
+        }
+      }
+    })
     
-    await button.trigger('click')
+    // Find the count button by test ID
+    const countButton = wrapper.find('[data-testid="count-button"]')
+    expect(countButton.exists()).toBe(true)
+    
+    // Click the button and verify counter increments
+    await countButton.trigger('click')
     expect(wrapper.text()).toContain('Count: 1')
   })
 })
@@ -1174,7 +1364,17 @@ create_documentation() {
     cat > README.md << 'EOF'
 # Vue.js + TypeScript Development Environment
 
-This project was created with a comprehensive Vue.js development setup including:
+This project was created with a comprehensive Vue.js development setup script that provides a complete, production-ready development environment.
+
+## 📋 Prerequisites
+
+- **Node.js 18+** - [Download here](https://nodejs.org/)
+- **npm** - Comes with Node.js
+- **Git** - For version control hooks
+
+## 🛠️ Setup Script Features
+
+The `vue_setup.sh` script creates a complete Vue.js development environment with:
 
 ## 🚀 Technology Stack
 
@@ -1304,7 +1504,46 @@ src/
 
 ## 🚀 Getting Started
 
-1. Install dependencies: `npm install`
+### Installation Options
+
+**Interactive Mode (Recommended):**
+```bash
+./vue_setup.sh
+```
+The script will prompt you for:
+- Project name
+- Target directory (with current directory as default)
+
+**Command Line Mode:**
+```bash
+./vue_setup.sh [project_name] [target_directory]
+```
+
+**Examples:**
+```bash
+# Create in current directory
+./vue_setup.sh MyProject
+
+# Create in specific directory
+./vue_setup.sh MyProject /Users/username/Projects
+
+# Create in home directory
+./vue_setup.sh MyProject ~/Development
+
+# Full path example
+./vue_setup.sh MyProject /opt/projects/web-apps
+```
+
+### Directory Selection Features
+
+- **Flexible Paths**: Supports absolute paths, relative paths, and tilde expansion (`~/`)
+- **Auto-Creation**: Creates target directories if they don't exist
+- **Validation**: Checks for existing projects to prevent overwriting
+- **User-Friendly**: Clear prompts and helpful examples during interactive mode
+
+### After Project Creation
+
+1. The script automatically navigates to your new project
 2. Start development server: `npm run dev`
 3. Open your browser to `http://localhost:3000`
 
@@ -1315,6 +1554,37 @@ The generated project includes:
 - **HelloWorld Component**: Demonstrates Vue 3, TypeScript, Tailwind, Vuetify, and Axios integration
 - **Responsive Views**: Modern HomeView and AboutView with comprehensive Tailwind styling
 - **Working Examples**: Counter with Pinia, API calls with Axios composables, theme switching
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**Permission Issues (macOS/Linux):**
+```bash
+chmod +x vue_setup.sh
+./vue_setup.sh
+```
+
+**Node.js Version Issues:**
+```bash
+node --version  # Should be 18+
+npm --version   # Should be 8+
+```
+
+**Directory Already Exists:**
+- The script will check if the target directory already contains a project with the same name
+- Choose a different name or different target directory
+
+**Package Installation Issues:**
+- The script includes 2-second delays and fallback mechanisms
+- If issues persist, try running `npm install` manually in the created project
+
+### Script Behavior
+
+- **Automatic Navigation**: Script navigates to the created project directory
+- **Error Handling**: Comprehensive error checking and user-friendly messages
+- **Cleanup**: No temporary files are left behind
+- **Safety**: Won't overwrite existing projects
 
 ## 📚 Additional Resources
 
@@ -1335,7 +1605,7 @@ main() {
     print_status "Starting Vue.js + TypeScript development environment setup..."
     
     check_prerequisites
-    get_project_name "$1"
+    get_project_info "$1" "$2"
     
     create_vue_project
     install_dependencies
@@ -1356,12 +1626,19 @@ main() {
     
     print_status "🎉 Setup completed successfully!"
     echo ""
+    print_status "Project created at: $PROJECT_PATH"
+    echo ""
     print_status "Next steps:"
-    echo "  cd $PROJECT_NAME"
+    echo "  npm run dev    # (you're already in the project directory)"
+    echo ""
+    print_status "Or if you need to navigate to the project later:"
+    echo "  cd $PROJECT_PATH"
     echo "  npm run dev"
     echo ""
     print_status "Happy coding! 🚀"
 }
 
+# Usage: ./vue_setup.sh [project_name] [target_directory]
+# Example: ./vue_setup.sh MyApp /Users/username/Projects
 # Run main function with all arguments
 main "$@"
