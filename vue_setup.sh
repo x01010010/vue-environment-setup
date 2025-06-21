@@ -1178,30 +1178,33 @@ This project was created with a comprehensive Vue.js development setup including
 
 ## 🚀 Technology Stack
 
-- **Vue 3** - Progressive JavaScript framework
+- **Vue 3** - Progressive JavaScript framework with Composition API
 - **TypeScript** - Static type checking with strict configuration
 - **Vite** - Fast build tool and dev server
-- **Tailwind CSS** - Utility-first CSS framework
+- **Tailwind CSS v4** - Utility-first CSS framework with Vite plugin
 - **Vuetify 3** - Material Design component library
 - **Pinia** - State management
 - **Vue Router** - Client-side routing
-- **Axios** - HTTP client for API calls
+- **Axios v1.x** - HTTP client with modern TypeScript support
 - **Vitest** - Unit testing framework
 - **Cypress** - E2E testing framework
 
 ## 📋 Features
 
 - ✅ Strict TypeScript configuration (no `any` types allowed)
-- ✅ ESLint with TypeScript rules
+- ✅ Modern ESLint flat config with Vue and TypeScript rules
 - ✅ Prettier code formatting
-- ✅ Git hooks with Husky and lint-staged
+- ✅ Git hooks with Husky v9+ and lint-staged
 - ✅ Conventional commits with commitlint
-- ✅ Test coverage reporting
+- ✅ Test coverage reporting with Vitest
 - ✅ Component and E2E testing setup
-- ✅ Axios configuration with interceptors
-- ✅ API service layer with TypeScript
+- ✅ Axios v1.x configuration with interceptors and composables
+- ✅ API service layer with proper TypeScript interfaces
 - ✅ Hot module replacement
-- ✅ Production build optimization
+- ✅ Production build optimization with code splitting
+- ✅ Tailwind CSS v4 with Vite plugin integration
+- ✅ Custom App.vue with Vuetify layout and theme switching
+- ✅ Responsive router views with modern styling
 
 ## 🛠️ Development Scripts
 
@@ -1253,24 +1256,27 @@ npm run type-check
 
 ## 📝 Code Standards
 
-- **TypeScript**: Strict mode enabled, no `any` types allowed
-- **ESLint**: Configured with Vue and TypeScript rules
-- **Prettier**: Automatic code formatting
-- **Conventional Commits**: Enforced via commitlint
+- **TypeScript**: Strict mode enabled with exactOptionalPropertyTypes and noUncheckedIndexedAccess
+- **ESLint**: Modern flat config with Vue 3, TypeScript, and composition API rules
+- **Prettier**: Automatic code formatting with lint-staged integration
+- **Conventional Commits**: Enforced via commitlint with Husky v9+ hooks
 
 ## 🎨 Styling
 
-- **Tailwind CSS**: Utility-first CSS framework
-- **Vuetify**: Material Design components
-- **Custom CSS**: Located in `src/assets/css/`
+- **Tailwind CSS v4**: Latest version with Vite plugin integration, no PostCSS config needed
+- **Vuetify 3**: Material Design components with theme switching capability
+- **Custom CSS**: Located in `src/assets/css/main.css` with proper layer organization
+- **Component Styling**: Responsive design with utility-first approach
+- **Theme Support**: Built-in light/dark mode switching
 
 ## 🌐 API Integration
 
-- **Axios Configuration**: Pre-configured instance with interceptors
-- **Request/Response Interceptors**: Authentication, logging, error handling
-- **API Services**: Structured service layer with TypeScript interfaces
-- **Composables**: `useApi` and `useApiImmediate` for reactive API calls
-- **Environment Variables**: `.env.example` with API configuration
+- **Axios v1.x Configuration**: Modern TypeScript-compatible setup with built-in definitions
+- **Request/Response Interceptors**: Authentication, logging, and comprehensive error handling
+- **API Services**: Structured service layer with proper TypeScript interfaces and generics
+- **Vue Composables**: `useApi` and `useApiImmediate` for reactive API calls with loading states
+- **Environment Variables**: `.env.example` with API configuration templates
+- **Error Handling**: Centralized error management with user-friendly messages
 
 ## 📁 Project Structure
 
@@ -1289,18 +1295,26 @@ src/
 
 ## 🔧 Configuration Files
 
-- `vite.config.ts` - Vite configuration
-- `tsconfig.json` - TypeScript configuration
-- `tailwind.config.js` - Tailwind CSS configuration
-- `.eslintrc.cjs` - ESLint configuration
-- `vitest.config.ts` - Vitest configuration
-- `cypress.config.ts` - Cypress configuration
+- `vite.config.ts` - Vite configuration with Tailwind CSS v4 and Vuetify plugins
+- `tsconfig.json` - TypeScript configuration with strict mode and project references
+- `eslint.config.js` - Modern ESLint flat configuration (no legacy .eslintrc files)
+- `vitest.config.ts` - Vitest configuration with Vue and Vuetify support
+- `cypress.config.ts` - Cypress configuration for E2E and component testing
+- **No PostCSS config needed** - Tailwind CSS v4 works directly with Vite plugin
 
 ## 🚀 Getting Started
 
 1. Install dependencies: `npm install`
 2. Start development server: `npm run dev`
 3. Open your browser to `http://localhost:3000`
+
+## 🎯 What You'll See
+
+The generated project includes:
+- **Custom App.vue**: Clean Vuetify layout with app bar and theme toggle
+- **HelloWorld Component**: Demonstrates Vue 3, TypeScript, Tailwind, Vuetify, and Axios integration
+- **Responsive Views**: Modern HomeView and AboutView with comprehensive Tailwind styling
+- **Working Examples**: Counter with Pinia, API calls with Axios composables, theme switching
 
 ## 📚 Additional Resources
 
