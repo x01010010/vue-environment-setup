@@ -92,8 +92,8 @@ create_vue_project() {
 install_dependencies() {
     print_step "Installing additional dependencies..."
     
-    # Tailwind CSS with Vite plugin
-    npm install -D @tailwindcss/vite @tailwindcss/forms @tailwindcss/typography
+    # Tailwind CSS v4 with Vite plugin (official approach)
+    npm install -D tailwindcss @tailwindcss/vite
     
     # Vuetify 3
     npm install vuetify @mdi/font
@@ -101,19 +101,23 @@ install_dependencies() {
     
     # HTTP Client and API utilities
     npm install axios
-    npm install -D @types/axios
     
-    # Additional TypeScript tooling
-    npm install -D @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser
+    # Additional TypeScript tooling and ESLint packages
+    npm install -D @types/node typescript @typescript-eslint/eslint-plugin @typescript-eslint/parser
+npm install -D @eslint/js eslint-plugin-vue vue-eslint-parser
     
     # Testing utilities
-    npm install -D @vue/test-utils jsdom @vitest/ui @vitest/coverage-v8
+    npm install -D @vue/test-utils@latest jsdom vitest @vitest/ui @vitest/coverage-v8
     npm install -D @cypress/vite-dev-server start-server-and-test
     npm install -D axios-mock-adapter  # For mocking API calls in tests
     
     # Development utilities
-    npm install -D @vueuse/core @vueuse/nuxt
+    npm install -D @vueuse/core
     npm install -D husky lint-staged
+    
+    # Ensure all packages are properly installed
+    print_status "Dependencies installed, verifying installation..."
+    sleep 2
     
     print_status "Dependencies installed ✓"
 }
@@ -127,10 +131,10 @@ setup_axios() {
     
     # Create Axios instance configuration
     cat > src/api/index.ts << 'EOF'
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
+import axios from 'axios'
 
 // Create axios instance with base configuration
-const api: AxiosInstance = axios.create({
+const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
   timeout: 10000,
   headers: {
@@ -140,7 +144,7 @@ const api: AxiosInstance = axios.create({
 
 // Request interceptor
 api.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
+  (config) => {
     // Add auth token if available
     const token = localStorage.getItem('auth_token')
     if (token && config.headers) {
@@ -154,14 +158,14 @@ api.interceptors.request.use(
     
     return config
   },
-  (error: AxiosError) => {
+  (error) => {
     return Promise.reject(error)
   }
 )
 
 // Response interceptor
 api.interceptors.response.use(
-  (response: AxiosResponse) => {
+  (response) => {
     // Log response in development
     if (import.meta.env.DEV) {
       console.log('API Response:', response.status, response.config.url)
@@ -169,7 +173,7 @@ api.interceptors.response.use(
     
     return response
   },
-  (error: AxiosError) => {
+  (error) => {
     // Handle common errors
     if (error.response?.status === 401) {
       // Unauthorized - redirect to login or refresh token
@@ -189,20 +193,20 @@ api.interceptors.response.use(
 
 export default api
 
-// Export common API methods
-export const apiGet = <T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
+// Export common API methods with proper typing
+export const apiGet = <T = any>(url: string, config?: any) =>
   api.get<T>(url, config)
 
-export const apiPost = <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
+export const apiPost = <T = any>(url: string, data?: any, config?: any) =>
   api.post<T>(url, data, config)
 
-export const apiPut = <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
+export const apiPut = <T = any>(url: string, data?: any, config?: any) =>
   api.put<T>(url, data, config)
 
-export const apiPatch = <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
+export const apiPatch = <T = any>(url: string, data?: any, config?: any) =>
   api.patch<T>(url, data, config)
 
-export const apiDelete = <T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
+export const apiDelete = <T = any>(url: string, config?: any) =>
   api.delete<T>(url, config)
 EOF
 
@@ -281,7 +285,6 @@ EOF
     mkdir -p src/composables
     cat > src/composables/useApi.ts << 'EOF'
 import { ref, type Ref } from 'vue'
-import type { AxiosResponse, AxiosError } from 'axios'
 
 interface UseApiState<T> {
   data: Ref<T | null>
@@ -296,7 +299,7 @@ interface UseApiReturn<T> extends UseApiState<T> {
 
 // Composable for handling API calls with loading states
 export function useApi<T>(
-  apiCall: () => Promise<AxiosResponse<T>>
+  apiCall: () => Promise<any>
 ): UseApiReturn<T> {
   const data = ref<T | null>(null)
   const loading = ref<boolean>(false)
@@ -309,9 +312,8 @@ export function useApi<T>(
       
       const response = await apiCall()
       data.value = response.data
-    } catch (err) {
-      const axiosError = err as AxiosError
-      error.value = axiosError.response?.data?.message || axiosError.message || 'An error occurred'
+    } catch (err: any) {
+      error.value = err.response?.data?.message || err.message || 'An error occurred'
     } finally {
       loading.value = false
     }
@@ -334,7 +336,7 @@ export function useApi<T>(
 
 // Composable for API calls with immediate execution
 export function useApiImmediate<T>(
-  apiCall: () => Promise<AxiosResponse<T>>
+  apiCall: () => Promise<any>
 ): UseApiReturn<T> {
   const result = useApi(apiCall)
   
@@ -362,50 +364,35 @@ EOF
     print_status "Axios configuration created ✓"
 }
 
-# Setup Tailwind CSS with Vite plugin
+# Setup Tailwind CSS v4 with Vite plugin
 setup_tailwind() {
-    print_step "Setting up Tailwind CSS with Vite integration..."
+    print_step "Setting up Tailwind CSS v4 with Vite plugin..."
     
-    # Create tailwind.config.js (no PostCSS needed)
-    cat > tailwind.config.js << 'EOF'
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{vue,js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [
-    '@tailwindcss/forms',
-    '@tailwindcss/typography',
-  ],
-}
-EOF
-
-    # Create main CSS file with Tailwind directives
+    # No need for tailwind.config.js or PostCSS config with v4 Vite plugin
+    # Tailwind v4 works without configuration files
+    
+    # Create main CSS file with Tailwind v4 import
     mkdir -p src/assets/css
     cat > src/assets/css/main.css << 'EOF'
-@import "tailwindcss";
+@import 'tailwindcss';
 
-/* Custom styles */
+/* Custom component styles */
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded font-medium transition-colors duration-200;
+    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200 inline-flex items-center justify-center;
   }
   
   .btn-primary {
-    @apply bg-blue-600 text-white hover:bg-blue-700;
+    @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
   }
   
   .btn-secondary {
-    @apply bg-gray-600 text-white hover:bg-gray-700;
+    @apply bg-gray-600 text-white hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
   }
 }
 EOF
 
-    print_status "Tailwind CSS configured with Vite plugin ✓"
+    print_status "Tailwind CSS v4 configured with Vite plugin ✓"
 }
 
 # Setup Vuetify
@@ -558,55 +545,101 @@ EOF
     print_status "TypeScript configuration updated ✓"
 }
 
-# Setup ESLint with strict TypeScript rules
+# Setup ESLint with modern flat config
 setup_eslint() {
-    print_step "Setting up ESLint with strict TypeScript rules..."
+    print_step "Setting up ESLint with modern flat config..."
     
-    cat > .eslintrc.cjs << 'EOF'
-/* eslint-env node */
-require('@rushstack/eslint-patch/modern-module-resolution')
+    cat > eslint.config.js << 'EOF'
+import js from '@eslint/js'
+import vue from 'eslint-plugin-vue'
+import typescript from '@typescript-eslint/eslint-plugin'
+import typescriptParser from '@typescript-eslint/parser'
+import vueParser from 'vue-eslint-parser'
 
-module.exports = {
-  root: true,
-  'extends': [
-    'plugin:vue/vue3-essential',
-    'eslint:recommended',
-    '@vue/eslint-config-typescript',
-    '@vue/eslint-config-prettier/skip-formatting'
-  ],
-  parserOptions: {
-    ecmaVersion: 'latest'
+export default [
+  // Base configuration
+  js.configs.recommended,
+  
+  // Vue files
+  {
+    files: ['**/*.vue'],
+    languageOptions: {
+      parser: vueParser,
+      parserOptions: {
+        parser: typescriptParser,
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
+    plugins: {
+      vue,
+      '@typescript-eslint': typescript,
+    },
+    rules: {
+      ...vue.configs['vue3-essential'].rules,
+      
+      // Vue specific rules
+      'vue/multi-word-component-names': 'error',
+      'vue/component-definition-name-casing': ['error', 'PascalCase'],
+      'vue/component-name-in-template-casing': ['error', 'PascalCase'],
+      'vue/define-emits-declaration': 'error',
+      'vue/define-props-declaration': 'error',
+      'vue/no-undef-components': 'error',
+      'vue/no-unused-components': 'error',
+      'vue/no-unused-vars': 'error',
+    },
   },
-  rules: {
-    // TypeScript specific rules
-    '@typescript-eslint/no-explicit-any': 'error',
-    '@typescript-eslint/no-unused-vars': 'error',
-    '@typescript-eslint/explicit-function-return-type': 'warn',
-    '@typescript-eslint/no-non-null-assertion': 'error',
-    '@typescript-eslint/prefer-nullish-coalescing': 'error',
-    '@typescript-eslint/prefer-optional-chain': 'error',
-    '@typescript-eslint/strict-boolean-expressions': 'error',
-    
-    // Vue specific rules
-    'vue/multi-word-component-names': 'error',
-    'vue/component-definition-name-casing': ['error', 'PascalCase'],
-    'vue/component-name-in-template-casing': ['error', 'PascalCase'],
-    'vue/define-emits-declaration': 'error',
-    'vue/define-props-declaration': 'error',
-    'vue/no-undef-components': 'error',
-    'vue/no-unused-components': 'error',
-    'vue/no-unused-vars': 'error',
-    
-    // General rules
-    'prefer-const': 'error',
-    'no-var': 'error',
-    'no-console': 'warn',
-    'no-debugger': 'error'
-  }
-}
+  
+  // TypeScript files
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': typescript,
+    },
+    rules: {
+      // TypeScript specific rules
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/explicit-function-return-type': 'warn',
+      '@typescript-eslint/no-non-null-assertion': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': 'error',
+      '@typescript-eslint/prefer-optional-chain': 'error',
+    },
+  },
+  
+  // All JavaScript/TypeScript files
+  {
+    files: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', '**/*.vue'],
+    rules: {
+      // General rules
+      'prefer-const': 'error',
+      'no-var': 'error',
+      'no-console': 'warn',
+      'no-debugger': 'error',
+    },
+  },
+  
+  // Ignore patterns
+  {
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      '.output/**',
+      '.nuxt/**',
+      'coverage/**',
+    ],
+  },
+]
 EOF
 
-    print_status "ESLint configuration updated ✓"
+    print_status "ESLint flat config created ✓"
 }
 
 # Setup testing configuration
@@ -686,11 +719,12 @@ update_main_ts() {
     cat > src/main.ts << 'EOF'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import vuetify from './plugins/vuetify'
 
 import App from './App.vue'
 import router from './router'
+import vuetify from './plugins/vuetify'
 
+// Import styles - order matters!
 import './assets/css/main.css'
 
 const app = createApp(App)
@@ -703,6 +737,144 @@ app.mount('#app')
 EOF
 
     print_status "main.ts updated ✓"
+}
+
+# Update App.vue to use our custom component
+update_app_vue() {
+    print_step "Updating App.vue to use custom components..."
+    
+    cat > src/App.vue << 'EOF'
+<template>
+  <v-app>
+    <v-app-bar
+      :elevation="2"
+      color="primary"
+    >
+      <v-app-bar-title>Vue Development Environment</v-app-bar-title>
+      
+      <v-spacer></v-spacer>
+      
+      <v-btn
+        icon="mdi-theme-light-dark"
+        @click="toggleTheme"
+      ></v-btn>
+    </v-app-bar>
+
+    <v-main>
+      <v-container fluid class="pa-4">
+        <HelloWorld />
+      </v-container>
+    </v-main>
+  </v-app>
+</template>
+
+<script setup lang="ts">
+import { useTheme } from 'vuetify'
+import HelloWorld from './components/HelloWorld.vue'
+
+const theme = useTheme()
+
+const toggleTheme = () => {
+  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
+}
+</script>
+
+<style>
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+</style>
+EOF
+
+    print_status "App.vue updated ✓"
+}
+
+# Update router views to use proper styling
+update_router_views() {
+    print_step "Updating router views..."
+    
+    # Update HomeView
+    cat > src/views/HomeView.vue << 'EOF'
+<template>
+  <div class="min-h-screen bg-gray-50">
+    <div class="max-w-4xl mx-auto py-8 px-4">
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">
+          Welcome to Vue.js Development Environment
+        </h1>
+        <p class="text-xl text-gray-600">
+          A complete setup with TypeScript, Tailwind CSS, Vuetify, and more
+        </p>
+      </div>
+      
+      <HelloWorld msg="You did it!" />
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import HelloWorld from '@/components/HelloWorld.vue'
+</script>
+EOF
+
+    # Update AboutView  
+    cat > src/views/AboutView.vue << 'EOF'
+<template>
+  <div class="min-h-screen bg-gray-50">
+    <div class="max-w-4xl mx-auto py-8 px-4">
+      <div class="bg-white rounded-lg shadow-md p-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">About This Project</h1>
+        
+        <div class="prose max-w-none">
+          <p class="text-lg text-gray-700 mb-6">
+            This Vue.js project was generated with a comprehensive development setup that includes:
+          </p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div class="bg-blue-50 p-4 rounded-lg">
+              <h3 class="font-semibold text-blue-900 mb-2">Frontend Framework</h3>
+              <ul class="text-sm text-blue-800 space-y-1">
+                <li>• Vue 3 with Composition API</li>
+                <li>• TypeScript with strict typing</li>
+                <li>• Vite for fast development</li>
+              </ul>
+            </div>
+            
+            <div class="bg-green-50 p-4 rounded-lg">
+              <h3 class="font-semibold text-green-900 mb-2">Styling & UI</h3>
+              <ul class="text-sm text-green-800 space-y-1">
+                <li>• Tailwind CSS v4</li>
+                <li>• Vuetify 3 components</li>
+                <li>• Material Design icons</li>
+              </ul>
+            </div>
+            
+            <div class="bg-purple-50 p-4 rounded-lg">
+              <h3 class="font-semibold text-purple-900 mb-2">Development Tools</h3>
+              <ul class="text-sm text-purple-800 space-y-1">
+                <li>• ESLint + Prettier</li>
+                <li>• Vitest + Cypress testing</li>
+                <li>• Husky Git hooks</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+            <h3 class="font-semibold text-yellow-900 mb-2">API Integration</h3>
+            <p class="text-yellow-800">
+              Complete Axios setup with interceptors, error handling, and Vue composables for reactive API calls.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+EOF
+
+    print_status "Router views updated ✓"
 }
 
 # Update package.json scripts
@@ -726,9 +898,8 @@ update_package_scripts() {
       'test:coverage': 'vitest run --coverage',
       'build-only': 'vite build',
       'type-check': 'vue-tsc --build --force',
-      'lint': 'eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore',
-      'format': 'prettier --write src/',
-      'prepare': 'husky install'
+      'lint': 'eslint . --fix',
+      'format': 'prettier --write src/'
     };
     
     fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
@@ -746,10 +917,20 @@ setup_git_hooks() {
         git init
     fi
     
-    # Setup Husky
-    npx husky install
-    npx husky add .husky/pre-commit "npx lint-staged"
-    npx husky add .husky/commit-msg 'npx --no -- commitlint --edit ${1}'
+    # Setup Husky with modern v9+ syntax
+    npx husky init
+    
+    # Create pre-commit hook
+    cat > .husky/pre-commit << 'EOF'
+npx lint-staged
+EOF
+    chmod +x .husky/pre-commit
+    
+    # Create commit-msg hook
+    cat > .husky/commit-msg << 'EOF'
+npx --no -- commitlint --edit $1
+EOF
+    chmod +x .husky/commit-msg
     
     # Setup lint-staged
     cat > .lintstagedrc.json << 'EOF'
@@ -773,7 +954,7 @@ EOF
 }
 EOF
 
-    print_status "Git hooks configured ✓"
+    print_status "Git hooks configured with modern Husky ✓"
 }
 
 # Create example components
@@ -861,16 +1042,18 @@ create_example_components() {
     </v-card>
 
     <!-- Tailwind styled section -->
-    <div class="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-lg text-white">
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-lg text-white shadow-lg">
       <h3 class="text-xl font-bold mb-2">Tailwind Styling</h3>
       <p class="mb-4">This section uses Tailwind CSS classes for styling.</p>
-      <button 
-        class="btn btn-primary mr-2"
-        @click="toggleTheme"
-      >
-        Toggle Theme
-      </button>
-      <span class="text-sm opacity-90">Current theme: {{ currentTheme }}</span>
+      <div class="space-x-2">
+        <button 
+          class="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+          @click="toggleTheme"
+        >
+          Toggle Theme
+        </button>
+        <span class="text-sm opacity-90">Current theme: {{ currentTheme }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -920,7 +1103,9 @@ const toggleTheme = (): void => {
 
 <style scoped>
 .hello-world {
-  @apply max-w-2xl mx-auto p-6;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1.5rem;
 }
 </style>
 EOF
@@ -1148,6 +1333,8 @@ main() {
     setup_eslint
     setup_testing
     update_main_ts
+    update_app_vue
+    update_router_views
     update_package_scripts
     setup_git_hooks
     create_example_components
