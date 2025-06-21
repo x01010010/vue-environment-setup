@@ -92,8 +92,8 @@ create_vue_project() {
 install_dependencies() {
     print_step "Installing additional dependencies..."
     
-    # Tailwind CSS
-    npm install -D tailwindcss postcss autoprefixer @tailwindcss/forms @tailwindcss/typography
+    # Tailwind CSS with Vite plugin
+    npm install -D @tailwindcss/vite @tailwindcss/forms @tailwindcss/typography
     
     # Vuetify 3
     npm install vuetify @mdi/font
@@ -362,13 +362,11 @@ EOF
     print_status "Axios configuration created ✓"
 }
 
-# Initialize Tailwind CSS
+# Setup Tailwind CSS with Vite plugin
 setup_tailwind() {
-    print_step "Setting up Tailwind CSS..."
+    print_step "Setting up Tailwind CSS with Vite integration..."
     
-    npx tailwindcss init -p
-    
-    # Update tailwind.config.js
+    # Create tailwind.config.js (no PostCSS needed)
     cat > tailwind.config.js << 'EOF'
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -380,8 +378,8 @@ export default {
     extend: {},
   },
   plugins: [
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/typography'),
+    '@tailwindcss/forms',
+    '@tailwindcss/typography',
   ],
 }
 EOF
@@ -389,9 +387,7 @@ EOF
     # Create main CSS file with Tailwind directives
     mkdir -p src/assets/css
     cat > src/assets/css/main.css << 'EOF'
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* Custom styles */
 @layer components {
@@ -409,7 +405,7 @@ EOF
 }
 EOF
 
-    print_status "Tailwind CSS configured ✓"
+    print_status "Tailwind CSS configured with Vite plugin ✓"
 }
 
 # Setup Vuetify
@@ -476,20 +472,19 @@ update_vite_config() {
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vuetify from 'vite-plugin-vuetify'
+import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [
     vue(),
     vuetify({ autoImport: true }),
+    tailwindcss(),
   ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
-  },
-  css: {
-    postcss: './postcss.config.js',
   },
   server: {
     port: 3000,
