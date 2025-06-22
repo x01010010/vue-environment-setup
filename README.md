@@ -1,323 +1,254 @@
-# Vue.js + TypeScript Development Environment Setup Script
+# Vue.js + TypeScript Development Environment
 
-A comprehensive bash script that creates a production-ready Vue.js development environment with TypeScript, Tailwind CSS, Vuetify, Pinia, Axios, and complete testing setup.
-
-## 🚀 Features
-
-This script automatically sets up a modern Vue.js development environment with:
-
-- **Vue 3** with Composition API
-- **TypeScript** with strict configuration
-- **Vite** for fast development and building
-- **Tailwind CSS** with Vite plugin integration
-- **Vuetify 3** Material Design components
-- **Pinia** for state management
-- **Vue Router** for routing
-- **Axios** with interceptors and API service layer
-- **Vitest** for unit testing
-- **Cypress** for E2E testing
-- **ESLint** with TypeScript rules
-- **Prettier** for code formatting
-- **Husky v9+** with Git hooks
-- **Commitlint** for conventional commits
-- **Example components** demonstrating all features
+This project was created with a comprehensive Vue.js development setup script that provides a complete, production-ready development environment.
 
 ## 📋 Prerequisites
 
-Before running the script, ensure you have:
+- **Node.js 18+** - [Download here](https://nodejs.org/)
+- **npm** - Comes with Node.js
+- **Git** - For version control hooks
 
-- **Node.js 18+** installed
-- **npm** package manager
-- **Git** (optional, but recommended)
+## 🛠️ Setup Script Features
 
-### Check Prerequisites
+The `vue_setup.sh` script orchestrates a modular setup process to create a complete Vue.js development environment. Key features include:
 
-```bash
-# Check Node.js version (should be 18+)
-node --version
+- **Modular Architecture**: The setup logic is split into maintainable scripts located in the `setup/` directory.
+- **Interactive Setup**: Prompts for project name and directory.
+- **Comprehensive Tooling**: Includes TypeScript, Vuetify, Tailwind CSS, Pinia, Vitest, Cypress, and more.
+- **Production-Ready**: Generates a project with best practices for building, testing, and linting.
 
-# Check npm
-npm --version
+## 🚀 Technology Stack
 
-# Check git (optional)
-git --version
-```
+- **Vue 3** - Progressive JavaScript framework with Composition API
+- **TypeScript** - Static type checking with strict configuration
+- **Vite** - Fast build tool and dev server
+- **Tailwind CSS v4** - Utility-first CSS framework with Vite plugin
+- **Vuetify 3** - Material Design component library
+- **Pinia** - State management
+- **Vue Router** - Client-side routing
+- **Axios v1.x** - HTTP client with modern TypeScript support
+- **Vitest** - Unit testing framework
+- **Cypress** - E2E testing framework
 
-## 🛠️ Installation & Usage
+## 🏗️ Script Architecture
 
-### Method 1: Download and Run
+The main `vue_setup.sh` script acts as an orchestrator. It sources and executes a series of modular scripts from the `setup/` directory in a specific order. This design makes the setup process easier to understand, maintain, and customize.
 
-```bash
-# Download the script
-curl -O https://raw.githubusercontent.com/your-repo/vue-setup/main/vue_setup.sh
+- `setup/helpers.sh`: Contains utility functions for colored output.
+- `setup/project.sh`: Handles prerequisite checks and initial project scaffolding.
+- `setup/dependencies.sh`: Installs all required npm packages.
+- `setup/configuration.sh`: Creates all the configuration files (Vite, ESLint, TypeScript, etc.).
+- `setup/testing.sh`: Configures Vitest, Cypress, and the test environment.
+- `setup/source_files.sh`: Updates the core application files (`App.vue`, `main.ts`, etc.).
+- `setup/finalization.sh`: Updates `package.json` scripts and sets up Git hooks.
+- `setup/examples.sh`: Creates all the example components, tests, and this README file.
 
-# Make it executable
-chmod +x vue_setup.sh
+## 📋 Features
 
-# Run the script
-./vue_setup.sh my-project-name
-```
+- ✅ Strict TypeScript configuration (no `any` types allowed)
+- ✅ Modern ESLint flat config with Vue and TypeScript rules
+- ✅ Prettier code formatting
+- ✅ Git hooks with Husky v9+ and lint-staged
+- ✅ Conventional commits with commitlint
+- ✅ 100% test coverage goal with Vitest
+- ✅ Component and E2E testing setup
+- ✅ Axios v1.x configuration with interceptors and composables
+- ✅ API service layer with proper TypeScript interfaces
+- ✅ Hot module replacement
+- ✅ Production build optimization with code splitting
+- ✅ Tailwind CSS v4 with Vite plugin integration
+- ✅ Custom App.vue with Vuetify layout and theme switching
+- ✅ Responsive router views with modern styling
 
-### Method 2: Clone Repository
-
-```bash
-# Clone this repository
-git clone https://github.com/your-repo/vue-setup.git
-cd vue-setup
-
-# Make script executable
-chmod +x vue_setup.sh
-
-# Run the script
-./vue_setup.sh my-project-name
-```
-
-### Method 3: Direct Execution
-
-```bash
-# Run directly with bash
-bash vue_setup.sh my-project-name
-```
-
-## 📝 Usage Examples
-
-### Basic Usage
-
-```bash
-# Create a new project called "my-app"
-./vue_setup.sh my-app
-```
-
-### Interactive Mode
+## 🛠️ Development Scripts
 
 ```bash
-# Run without project name - script will prompt for it
-./vue_setup.sh
-```
+# Start development server
+npm run dev
 
-## 🏗️ What Gets Created
+# Build for production
+npm run build
 
-After running the script, you'll have a complete project structure:
+# Preview production build
+npm run preview
 
-```
-my-project/
-├── .husky/                 # Git hooks
-├── cypress/                # E2E tests
-├── src/
-│   ├── api/               # Axios configuration & services
-│   ├── assets/            # Static assets & CSS
-│   ├── components/        # Vue components
-│   ├── composables/       # Vue composables (useApi, etc.)
-│   ├── plugins/           # Vuetify & other plugins
-│   ├── router/            # Vue Router setup
-│   ├── stores/            # Pinia stores
-│   ├── test/              # Test utilities
-│   └── views/             # Page components
-├── .env.example           # Environment variables
-├── .eslintrc.cjs          # ESLint configuration
-├── .gitignore             # Git ignore rules
-├── .lintstagedrc.json     # Lint-staged configuration
-├── cypress.config.ts      # Cypress configuration
-├── package.json           # Dependencies & scripts
-├── README.md              # Project documentation
-├── tailwind.config.js     # Tailwind CSS configuration
-├── tsconfig.*.json        # TypeScript configurations
-├── vite.config.ts         # Vite configuration
-└── vitest.config.ts       # Vitest configuration
-```
+# Run unit tests
+npm run test:unit
 
-## 🎯 Next Steps
+# Run unit tests with UI
+npm run test:unit:ui
 
-After the script completes:
+# Run E2E tests
+npm run test:e2e
 
-1. **Navigate to your project:**
-   ```bash
-   cd my-project-name
-   ```
+# Run E2E tests in development mode
+npm run test:e2e:dev
 
-2. **Start development server:**
-   ```bash
-   npm run dev
-   ```
+# Generate test coverage report
+npm run test:coverage
 
-3. **Open your browser:**
-   - The dev server will automatically open `http://localhost:3000`
-   - You'll see the example component demonstrating all features
+# Lint and fix files
+npm run lint
 
-4. **Optional - Set up environment variables:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your API URL and other settings
-   ```
+# Format code
+npm run format
 
-## 📚 Available Scripts
-
-The generated project includes these npm scripts:
-
-```bash
-# Development
-npm run dev              # Start development server
-npm run build            # Build for production
-npm run preview          # Preview production build
-
-# Testing
-npm run test:unit        # Run unit tests
-npm run test:unit:ui     # Run unit tests with UI
-npm run test:e2e         # Run E2E tests
-npm run test:e2e:dev     # Run E2E tests in dev mode
-npm run test:coverage    # Generate test coverage
-
-# Code Quality
-npm run lint             # Lint and fix code
-npm run format           # Format code with Prettier
-npm run type-check       # TypeScript type checking
-```
-
-## 🔧 Configuration
-
-### API Configuration
-
-Edit `.env` file to configure your API:
-
-```env
-VITE_API_BASE_URL=http://localhost:8000/api
-VITE_APP_TITLE=My Vue App
-```
-
-### Tailwind CSS
-
-Customize `tailwind.config.js`:
-
-```javascript
-export default {
-  content: ["./index.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
-  theme: {
-    extend: {
-      // Your custom theme extensions
-    },
-  },
-  plugins: ['@tailwindcss/forms', '@tailwindcss/typography'],
-}
-```
-
-### Vuetify Theming
-
-Edit `src/plugins/vuetify.ts` to customize Material Design theme:
-
-```typescript
-export default createVuetify({
-  theme: {
-    themes: {
-      light: {
-        colors: {
-          primary: '#your-color',
-          // ... other colors
-        },
-      },
-    },
-  },
-})
+# Type check
+npm run type-check
 ```
 
 ## 🧪 Testing
 
 ### Unit Tests
-
-```bash
-# Run all unit tests
-npm run test:unit
-
-# Run tests with UI
-npm run test:unit:ui
-
-# Run with coverage
-npm run test:coverage
-```
+- Framework: Vitest
+- Utils: @vue/test-utils
+- Location: `src/**/__tests__/*.spec.ts`
 
 ### E2E Tests
+- Framework: Cypress
+- Location: `cypress/e2e/**/*.cy.ts`
 
-```bash
-# Run E2E tests (headless)
-npm run test:e2e
+## 📝 Code Standards
 
-# Run E2E tests (interactive)
-npm run test:e2e:dev
+- **TypeScript**: Strict mode enabled with exactOptionalPropertyTypes and noUncheckedIndexedAccess
+- **ESLint**: Modern flat config with Vue 3, TypeScript, and composition API rules
+- **Prettier**: Automatic code formatting with lint-staged integration
+- **Conventional Commits**: Enforced via commitlint with Husky v9+ hooks
+
+## 🎨 Styling
+
+- **Tailwind CSS v4**: Latest version with Vite plugin integration, no PostCSS config needed
+- **Vuetify 3**: Material Design components with theme switching capability
+- **Custom CSS**: Located in `src/assets/css/main.css` with proper layer organization
+- **Component Styling**: Responsive design with utility-first approach
+- **Theme Support**: Built-in light/dark mode switching
+
+## 🌐 API Integration
+
+- **Axios v1.x Configuration**: Modern TypeScript-compatible setup with built-in definitions
+- **Request/Response Interceptors**: Authentication, logging, and comprehensive error handling
+- **API Services**: Structured service layer with proper TypeScript interfaces and generics
+- **Vue Composables**: `useApi` and `useApiImmediate` for reactive API calls with loading states
+- **Environment Variables**: `.env.example` with API configuration templates
+- **Error Handling**: Centralized error management with user-friendly messages
+
+## 📁 Project Structure
+
+```
+.
+├── setup/          # Modular setup scripts
+├── src/
+│   ├── api/        # Axios configuration and API services
+│   ├── assets/     # Static assets
+│   ├── components/ # Vue components
+│   ├── composables/# Vue composables (including useApi)
+│   ├── plugins/    # Vue plugins configuration
+│   ├── router/     # Vue Router configuration
+│   ├── stores/     # Pinia stores
+│   ├── test/       # Test utilities
+│   └── views/      # Route components
+└── vue_setup.sh    # Master setup script
 ```
 
-## 🔍 What's Included
+## 🔧 Configuration Files
 
-### TypeScript Configuration
-- Strict mode enabled
-- No `any` types allowed
-- Comprehensive type checking
+- `vite.config.ts` - Vite configuration with Tailwind CSS v4 and Vuetify plugins
+- `tsconfig.json` - TypeScript configuration with strict mode and project references
+- `eslint.config.js` - Modern ESLint flat configuration (no legacy .eslintrc files)
+- `vitest.config.ts` - Vitest configuration with Vue and Vuetify support
+- `cypress.config.ts` - Cypress configuration for E2E and component testing
+- **No PostCSS config needed** - Tailwind CSS v4 works directly with Vite plugin
 
-### ESLint Rules
-- Vue 3 specific rules
-- TypeScript strict rules
-- Prettier integration
+## 🚀 Getting Started
 
-### Git Hooks
-- Pre-commit: Runs linting and formatting
-- Commit-msg: Enforces conventional commits
+### Installation Options
 
-### API Layer
-- Axios with interceptors
-- Request/response logging
-- Authentication handling
-- Error handling
-- TypeScript interfaces
+**Interactive Mode (Recommended):**
+```bash
+./vue_setup.sh
+```
+The script will prompt you for:
+- Project name
+- Target directory (with current directory as default)
 
-## 🐛 Troubleshooting
+**Command Line Mode:**
+```bash
+./vue_setup.sh [project_name] [target_directory]
+```
+
+**Examples:**
+```bash
+# Create in current directory
+./vue_setup.sh MyProject
+
+# Create in specific directory
+./vue_setup.sh MyProject /Users/username/Projects
+
+# Create in home directory
+./vue_setup.sh MyProject ~/Development
+
+# Full path example
+./vue_setup.sh MyProject /opt/projects/web-apps
+```
+
+### Directory Selection Features
+
+- **Flexible Paths**: Supports absolute paths, relative paths, and tilde expansion (`~/`)
+- **Auto-Creation**: Creates target directories if they don't exist
+- **Validation**: Checks for existing projects to prevent overwriting
+- **User-Friendly**: Clear prompts and helpful examples during interactive mode
+
+### After Project Creation
+
+1. The script automatically navigates to your new project
+2. Start development server: `npm run dev`
+3. Open your browser to `http://localhost:3000`
+
+## 🎯 What You'll See
+
+The generated project includes:
+- **Custom App.vue**: Clean Vuetify layout with app bar and theme toggle
+- **HelloWorld Component**: Demonstrates Vue 3, TypeScript, Tailwind, Vuetify, and Axios integration
+- **Responsive Views**: Modern HomeView and AboutView with comprehensive Tailwind styling
+- **Working Examples**: Counter with Pinia, API calls with Axios composables, theme switching
+
+## 🚨 Troubleshooting
 
 ### Common Issues
 
-**Node.js version error:**
+**Permission Issues (macOS/Linux):**
 ```bash
-# Install Node.js 18+ using nvm
-nvm install 18
-nvm use 18
+chmod +x vue_setup.sh && chmod +x setup/*.sh
+./vue_setup.sh
 ```
 
-**Permission denied:**
+**Node.js Version Issues:**
 ```bash
-# Make script executable
-chmod +x vue_setup.sh
+node --version  # Should be 18+
+npm --version   # Should be 8+
 ```
 
-**Port already in use:**
-```bash
-# Change port in vite.config.ts or kill process
-lsof -ti:3000 | xargs kill
-```
+**Directory Already Exists:**
+- The script will check if the target directory already contains a project with the same name
+- Choose a different name or different target directory
 
-**Husky hooks not working:**
-```bash
-# Reinstall Husky hooks
-npx husky init
-```
+**Package Installation Issues:**
+- The script includes 2-second delays and fallback mechanisms
+- If issues persist, try running `npm install` manually in the created project
 
-## 🤝 Contributing
+### Script Behavior
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- **Automatic Navigation**: Script navigates to the created project directory
+- **Error Handling**: Comprehensive error checking and user-friendly messages
+- **Cleanup**: No temporary files are left behind
+- **Safety**: Won't overwrite existing projects
 
-## 📄 License
+## 📚 Additional Resources
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Vue.js](https://vuejs.org/) team for the amazing framework
-- [Vite](https://vitejs.dev/) for the lightning-fast build tool
-- [Tailwind CSS](https://tailwindcss.com/) for utility-first styling
-- [Vuetify](https://vuetifyjs.com/) for Material Design components
-- All the open-source contributors who made this possible
-
----
-
-**Happy coding!** 🚀
-
-If you find this script helpful, please give it a ⭐ star! 
+- [Vue 3 Documentation](https://vuejs.org/)
+- [TypeScript Documentation](https://www.typescriptlang.org/)
+- [Tailwind CSS Documentation](https://tailwindcss.com/)
+- [Vuetify Documentation](https://vuetifyjs.com/)
+- [Pinia Documentation](https://pinia.vuejs.org/)
+- [Vitest Documentation](https://vitest.dev/)
+- [Cypress Documentation](https://docs.cypress.io/) 
