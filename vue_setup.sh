@@ -17,7 +17,9 @@ source "$SETUP_DIR/configuration.sh"
 source "$SETUP_DIR/testing.sh"
 source "$SETUP_DIR/source_files.sh"
 source "$SETUP_DIR/finalization.sh"
-source "$SETUP_DIR/examples.sh"
+source "$SETUP_DIR/components.sh"
+source "$SETUP_DIR/tests.sh"
+source "$SETUP_DIR/documentation.sh"
 
 # --- Main execution function ---
 main() {
@@ -45,7 +47,8 @@ main() {
     update_app_vue
     update_router_views
     create_example_components
-    
+    create_tests
+
     # --- Finalization ---
     update_package_scripts
     setup_git_hooks
